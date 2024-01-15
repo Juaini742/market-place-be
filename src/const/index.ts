@@ -8,6 +8,7 @@ export interface UserAttributes {
 }
 
 export interface ColorAndSize {
+  id: string;
   name: string;
 }
 

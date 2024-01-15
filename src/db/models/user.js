@@ -20,6 +20,9 @@ module.exports = (sequelize, DataTypes) => {
       User.hasOne(models.Address, {
         foreignKey: "user_id",
       });
+      User.hasOne(models.Comment, {
+        foreignKey: "user_id",
+      });
     }
   }
   User.init(

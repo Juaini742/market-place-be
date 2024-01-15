@@ -15,6 +15,36 @@ export const getAddress = async (
   }
 };
 
+// GET ADDRESS BY USER ID
+export const getAddressByUserId = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.params.id;
+
+    if (!userId) {
+      res.status(404).json("User not found");
+      return;
+    }
+
+    const address = await Address.findOne({
+      where: {
+        user_id: userId,
+      },
+    });
+
+    if (!address) {
+      res.status(404).json("Something is going wrong");
+      return;
+    }
+
+    res.status(200).json(address);
+  } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+};
+
 // ADD ADDRESS ITEM
 export const addAddress = async (
   req: Request,
@@ -28,14 +58,43 @@ export const addAddress = async (
       return;
     }
 
-    const {city, postal_code, province, country, address} = req.body;
+    const {city, postal_code, privince, country, address} = req.body;
 
     const addressData = await Address.create({
       id: crypto.randomUUID(),
       user_id: userId,
       city,
       postal_code,
-      province,
+      privince,
+      country,
+      address,
+    });
+
+    res.status(200).json(addressData);
+  } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+};
+
+// UPDATE ADDRESS ITEM
+export const updateAddress = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const addressData = await Address.findByPk(req.params.id);
+
+    if (!addressData) {
+      res.status(404).json("Address not found");
+      return;
+    }
+
+    const {city, postal_code, privince, country, address} = req.body;
+
+    await addressData.update({
+      city,
+      postal_code,
+      privince,
       country,
       address,
     });

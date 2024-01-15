@@ -2,6 +2,7 @@ import {authMiddleware} from "../middleware/auth.middleware";
 import {
   deleteUserById,
   getAllUser,
+  getUserByToken,
   login,
   logout,
   register,
@@ -15,6 +16,7 @@ const router = express.Router();
 router.post("/register", register);
 router.post("/login", login);
 router.get("/users", authMiddleware, getAllUser);
+router.get("/getUserByToken", authMiddleware, getUserByToken);
 router.put("/updateUser/:id", authMiddleware, updateUser);
 router.post("/logout", authMiddleware, logout);
 router.get("/refreshToken", authMiddleware, refreshToken);

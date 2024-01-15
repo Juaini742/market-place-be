@@ -19,6 +19,43 @@ export const getAllUser = async (
   }
 };
 
+// GET USER BY TOKEN
+export const getUserByToken = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+
+    if (!token) {
+      res.status(401).json({error: "Token not provided"});
+      return;
+    }
+
+    const decoded = jwt.verify(token, secretKey);
+
+    const user_id = (decoded as any).user_id;
+
+    const userDetails = await User_details.findOne({where: {user_id}});
+
+    if (!userDetails) {
+      res.status(404).json({error: "User is not found"});
+      return;
+    }
+
+    const user = await User.findByPk(user_id);
+
+    if (!user) {
+      res.status(404).json({error: "User is not found"});
+      return;
+    }
+
+    res.status(200).json({user});
+  } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+};
+
 //  REGISTER USER
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {

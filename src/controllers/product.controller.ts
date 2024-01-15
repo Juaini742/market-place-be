@@ -13,7 +13,53 @@ export const getAllProducts = async (
   try {
     const products = await Product.findAll();
 
-    res.status(200).json(products);
+    const user_id = products.map((item: {user_id: string}) => item.user_id);
+
+    const users = await User.findAll({
+      where: {id: user_id},
+    });
+
+    // const productId = products.map((item: any) => item.id);
+    // const colors = await Product_color.findAll({
+    //   where: {product_id: productId},
+    // });
+    // const sizes = await Product_size.findAll({
+    //   where: {product_id: productId},
+    // });
+
+    // const result = products.map((product: ProductAttributes) => {
+    //   const user = users.find((usr: any) => usr.id === product.user_id);
+    //   const productColors = colors
+    //     .filter((clr: any) => clr.product_id === product.id)
+    //     .map((clr: any) => clr.name);
+    //   const productSizes = sizes
+    //     .filter((sze: any) => sze.product_id === product.id)
+    //     .map((sze: any) => sze.name);
+
+    //   return {
+    //     id: product.id,
+    //     user_id: {
+    //       id: user.id,
+    //       username: user.username,
+    //       store_name: user.store_name || null,
+    //     },
+    //     product_name: product.product_name,
+    //     colors_item: productColors,
+    //     sizes_item: productSizes,
+    //     stock: product.stock,
+    //     category: product.category,
+    //     sold: product.sold,
+    //     price: product.price,
+    //     short_description: product.short_description,
+    //     long_description: product.long_description,
+    //     img: product.img,
+    //     createdAt: product.createdAt,
+    //     updatedAt: product.updatedAt,
+    //   };
+    // });
+
+    // res.status(200).json(result);
+    res.status(200).json({users, user_id});
   } catch (error) {
     throw new Error(error.message);
   }
