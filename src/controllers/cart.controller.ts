@@ -74,6 +74,9 @@ export const getCartByUserId = async (
           store_name: user.store_name || null,
         },
         product_id: productData,
+        quantity: cart.quantity,
+        color: cart.color,
+        size: cart.size,
         createdAt: cart.createdAt,
         updatedAt: cart.createdAt,
       };
@@ -110,15 +113,52 @@ export const addCart = async (req: Request, res: Response): Promise<void> => {
     const decodedToken = jwt.verify(token, secretKey);
     const user_id = decodedToken.user_id;
 
-    const {quantity} = req.body;
+    const {quantity, color, size} = req.body;
+
+    // if (productId.stock < quantity) {
+    //   res.status(400).json({message: "Insufficient stock"});
+    //   return;
+    // }
+
+    // productId.stock -= quantity;
+
+    // await productId.save();
 
     const cart = await Cart.create({
       id: crypto.randomUUID(),
       user_id,
       product_id: productId.id,
       quantity,
+      color,
+      size,
     });
 
+    res.json({status: 200, cart});
+  } catch (error) {
+    res.json({error: error.message});
+  }
+};
+
+// UPDARE CART ITEM
+export const updateCart = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const cartId = req.params.id;
+
+    if (!cartId) {
+      res.status(404).json("Items not found");
+      return;
+    }
+
+    const cart = await Cart.findByPk(cartId);
+
+    const {quantity} = req.body;
+
+    await cart.update({
+      quantity,
+    });
     res.json({status: 200, cart});
   } catch (error) {
     res.json({error: error.message});

@@ -9,6 +9,9 @@ module.exports = {
         type: Sequelize.STRING,
         defaultValue: crypto.randomUUID(),
       },
+      avatar: {
+        type: Sequelize.STRING,
+      },
       username: {
         type: Sequelize.STRING,
       },

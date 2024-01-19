@@ -1,6 +1,7 @@
 import {Request, Response} from "express";
 import {passwordHasing} from "../utils/passwordHasing";
 import {secretKey} from "../utils/secretKey";
+import upload from "../utils/multerConfig";
 const {User, User_details} = require("../db/models");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -155,23 +156,40 @@ export const updateUser = async (
 ): Promise<void> => {
   try {
     const user = await User.findByPk(req.params.id);
+
     if (!user) {
       res.status(404).json("User not found");
       return;
     }
-    const {username, name, email, phone, store_name, sex} = req.body;
 
-    const newUser = await user.update({
-      id: crypto.randomUUID(),
-      username,
-      name,
-      email,
-      phone,
-      store_name,
-      sex,
+    upload.single("file")(req, res, async (err: any) => {
+      if (err) {
+        res.status(500).json({error: err.message});
+        return;
+      }
+
+      if (req.file) {
+        const {filename} = req.file;
+
+        let finalImageURL =
+          req.protocol + "://" + req.get("host") + "/Images/" + filename;
+
+        await user.update({avatar: finalImageURL});
+      }
+
+      const {username, name, email, phone, store_name, sex} = req.body;
+
+      const newUser = await user.update({
+        username,
+        name,
+        email,
+        phone,
+        store_name,
+        sex,
+      });
+
+      res.status(200).json(newUser);
     });
-
-    res.status(200).json(newUser);
   } catch (error) {
     res.status(500).json({error: error.message});
   }

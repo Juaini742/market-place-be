@@ -1,5 +1,5 @@
 import {Request, Response} from "express";
-const {Checkout_item} = require("../db/models");
+const {Checkout_item, Product} = require("../db/models");
 
 export const createCheckout = async (req: Request, res: Response) => {
   try {
@@ -10,7 +10,19 @@ export const createCheckout = async (req: Request, res: Response) => {
       return;
     }
 
+    const product = await Product.findByPk(productId);
+
     const {quantity, gross_amount, payment_status} = req.body;
+
+    if (product.stock < quantity) {
+      res.status(400).json({message: "Insufficient stock"});
+      return;
+    }
+
+    product.stock -= quantity;
+
+    await product.save();
+
     const checkout = await Checkout_item.create({
       product_id: productId,
       quantity,

@@ -15,6 +15,7 @@ module.exports = {
     const dataUsers = [
       {
         id: "04aada87-26cc-40d0-81f9-40ae34bc81dc",
+        avatar: "",
         username: "user1",
         name: "John Doe",
         email: "john.doe@example.com",
@@ -25,6 +26,7 @@ module.exports = {
       },
       {
         id: "79846596-af08-409b-97a9-daded7a4da29",
+        avatar: "",
         username: "user2",
         name: "Jane Doe",
         email: "jane.doe@example.com",
@@ -35,6 +37,7 @@ module.exports = {
       },
       {
         id: "79846596-af08-409b-97a9-daded7a4da30",
+        avatar: "",
         username: "user3",
         name: "Bob Smith",
         email: "bob.smith@example.com",
@@ -46,7 +49,8 @@ module.exports = {
     ];
 
     const seederData = dataUsers.map((item) => ({
-      id: crypto.randomUUID(),
+      id: item.id,
+      avatar: item.avatar,
       username: item.username,
       name: item.name,
       email: item.email,

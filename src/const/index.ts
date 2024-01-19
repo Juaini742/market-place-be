@@ -33,6 +33,9 @@ export interface CartAttributes {
   id: string;
   user_id: UserAttributes;
   product_id: ProductAttributes;
+  quantity: number;
+  color: string;
+  size: string;
   createdAt: string;
   updatedAt: string;
 }
