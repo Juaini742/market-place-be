@@ -16,14 +16,21 @@ module.exports = {
           key: "id",
         },
       },
-      shipping: {
+      shipping_id: {
         type: Sequelize.STRING,
+        references: {
+          model: "Shippings",
+          key: "id",
+        },
       },
       quantity: {
         type: Sequelize.INTEGER,
       },
-      gross_amount: {
-        type: Sequelize.FLOAT,
+      color: {
+        type: Sequelize.STRING,
+      },
+      size: {
+        type: Sequelize.STRING,
       },
       payment_status: {
         type: Sequelize.STRING,

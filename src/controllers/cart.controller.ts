@@ -70,6 +70,7 @@ export const getCartByUserId = async (
         id: cart.id,
         user_id: {
           id: user.id,
+          avatar: user.avatar,
           username: user.username,
           store_name: user.store_name || null,
         },

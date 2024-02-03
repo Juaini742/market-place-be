@@ -3,6 +3,7 @@ dotenv.config();
 
 export interface UserAttributes {
   id: string;
+  avatar: string;
   username: string;
   store_name: string | null;
 }
@@ -40,6 +41,16 @@ export interface CartAttributes {
   updatedAt: string;
 }
 
+export interface DataAttributes {
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+export const dbUsername = process.env.DB_USERNAME;
+export const dbPassword = process.env.DB_PASSWORD;
+export const dbName = process.env.DB_NAME;
+export const dbHost = process.env.DB_HOST;
 export const midtransPublicClient = process.env.MIDTRANS_PUBLIC_CLIENT;
 export const midtransPublicSecret = process.env.MIDTRANS_PUBLIC_SECRET;
 export const midtransPublicApi = process.env.MIDTRANS_PUBLIC_API;

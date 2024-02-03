@@ -19,6 +19,7 @@ export const getProductData = async (product: any, user: any): Promise<any> => {
     id: product.id,
     user_id: {
       id: user.id,
+      avatar: user.avatar,
       username: user.username,
       store_name: user.store_name || null,
     },

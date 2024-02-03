@@ -3,6 +3,7 @@ import {secretKey} from "../utils/secretKey";
 import {ProductAttributes, UserAttributes} from "../const";
 import {getProductData} from "../utils/productUtils";
 import {Op} from "sequelize";
+import upload from "../utils/multerConfig";
 const jwt = require("jsonwebtoken");
 const {Product, User, Product_color, Product_size} = require("../db/models");
 
@@ -26,23 +27,6 @@ export const getAllProducts = async (
 
     const filterOptions: any = {};
 
-    // if (keyword) {
-    //   products = await Product.findAll({
-    //     where: {
-    //       [Op.or]: [{product_name: {[Op.like]: `%${keyword}%`}}],
-    //     },
-    //     offset: (Number(page) - 1) * pageSize,
-    //     limit: pageSize,
-    //     order: [["sold", "DESC"]],
-    //   });
-    // } else {
-    //   (products = await Product.findAll({
-    //     offset: (Number(page) - 1) * pageSize,
-    //     limit: pageSize,
-    //   })),
-    //     (totalProducts = await Product.count());
-    // }
-
     if (keyword) {
       filterOptions[Op.or] = [{product_name: {[Op.like]: `%${keyword}%`}}];
     }
@@ -54,7 +38,7 @@ export const getAllProducts = async (
     }
 
     if (sortByPrice === "true") {
-      sortingOptions.push(["price", "DESC"]);
+      sortingOptions.push(["price", "ASC"]);
     }
 
     if (sortByLowestPrice === "true") {
@@ -75,14 +59,6 @@ export const getAllProducts = async (
         order: sortingOptions,
       });
 
-      // if (sortBySold === "true") {
-      //   products = await Product.findAll({
-      //     where: filterOptions,
-      //     offset: (Number(page) - 1) * pageSize,
-      //     limit: pageSize,
-      //     order: [["sold", "DESC"]],
-      //   });
-
       totalProducts = await Product.count({
         where: filterOptions,
       });
@@ -100,9 +76,16 @@ export const getAllProducts = async (
 
     const user_id = products.map((item: {user_id: string}) => item.user_id);
 
-    const users = await User.findAll({
-      where: {id: user_id},
-    });
+    const cleanedUserIds = user_id.filter((userId: any) => userId !== null);
+
+    const users =
+      cleanedUserIds.length > 0
+        ? await User.findAll({where: {id: cleanedUserIds}})
+        : [];
+
+    // const users = await User.findAll({
+    //   where: {id: user_id},
+    // });
 
     const productId = products.map((item: any) => item.id);
     const colors = await Product_color.findAll({
@@ -150,6 +133,7 @@ export const getAllProducts = async (
 
     res.status(200).json(result);
   } catch (error) {
+    console.error(error.message);
     throw new Error(error.message);
   }
 };
@@ -235,18 +219,6 @@ export const addProduct = async (
   res: Response
 ): Promise<void> => {
   try {
-    const {
-      product_name,
-      color_names,
-      size_names,
-      stock,
-      category,
-      sold,
-      price,
-      short_description,
-      long_description,
-    } = req.body;
-
     const tokenHeader = req.headers.authorization;
 
     if (!tokenHeader || !tokenHeader.startsWith("Bearer ")) {
@@ -258,50 +230,77 @@ export const addProduct = async (
     const decodedToken = jwt.verify(token, secretKey);
     const user_id = decodedToken.user_id;
 
-    const product = await Product.create({
-      id: crypto.randomUUID(),
-      user_id,
-      product_name,
-      stock,
-      category,
-      sold,
-      price,
-      short_description,
-      long_description,
-    });
+    upload.single("file")(req, res, async (err: any) => {
+      if (err) {
+        res.status(500).json({error: err.message});
+        return;
+      }
+      let finalImageURL = "";
+      if (req.file) {
+        const {filename} = req.file;
+        finalImageURL =
+          req.protocol + "://" + req.get("host") + "/Images/" + filename;
+      }
 
-    const colorPromises = color_names.map(async (color_name: string) => {
-      await Product_color.create({
-        name: color_name,
-        product_id: product.id,
+      const {
+        product_name,
+        color_names,
+        size_names,
+        stock,
+        category,
+        sold,
+        price,
+        short_description,
+        long_description,
+      } = req.body;
+
+      const product = await Product.create({
+        id: crypto.randomUUID(),
+        user_id,
+        product_name,
+        stock,
+        category,
+        sold,
+        price,
+        short_description,
+        long_description,
+        img: finalImageURL,
       });
-    });
 
-    const sizePromises = size_names.map(async (size_name: string) => {
-      await Product_size.create({
-        name: size_name,
-        product_id: product.id,
+      const colorPromises = color_names.map(async (color_name: string) => {
+        await Product_color.create({
+          name: color_name,
+          product_id: product.id,
+        });
       });
+
+      const sizePromises = size_names.map(async (size_name: string) => {
+        await Product_size.create({
+          name: size_name,
+          product_id: product.id,
+        });
+      });
+
+      await Promise.all(colorPromises);
+      await Promise.all(sizePromises);
+
+      const productResponse = {
+        id: product.id,
+        user_id,
+        product_name,
+        colors: color_names,
+        sizes: size_names,
+        stock,
+        category,
+        sold,
+        price,
+        short_description,
+        long_description,
+        img: finalImageURL,
+      };
+
+      res.status(200).json(productResponse);
     });
-
-    await Promise.all(colorPromises);
-    await Promise.all(sizePromises);
-
-    const productResponse = {
-      id: product.id,
-      user_id,
-      product_name,
-      colors: color_names,
-      sizes: size_names,
-      stock,
-      category,
-      sold,
-      price,
-      short_description,
-      long_description,
-    };
-
-    res.status(200).json(productResponse);
   } catch (error) {
     res.status(500).json({error: error.message});
   }
@@ -320,27 +319,88 @@ export const updateProduct = async (
       return;
     }
 
-    const {
-      product_name,
-      stock,
-      category,
-      sold,
-      price,
-      short_description,
-      long_description,
-    } = req.body;
+    upload.single("file")(req, res, async (err: any) => {
+      if (err) {
+        res.status(500).json({error: err.message});
+        return;
+      }
 
-    const oldProduct = await product.update({
-      product_name,
-      stock,
-      category,
-      sold,
-      price,
-      short_description,
-      long_description,
+      let fileUrl = "";
+      if (req.file) {
+        const {filename} = req.file;
+        fileUrl =
+          req.protocol + "://" + req.get("host") + "/Images/" + filename;
+      }
+
+      const colors = await Product_color.findAll({
+        where: {product_id: product.id},
+      });
+
+      const sizes = await Product_size.findAll({
+        where: {product_id: product.id},
+      });
+
+      if (!colors || !sizes) {
+        res.status(404).json("Item not found");
+        return;
+      }
+
+      const {
+        product_name,
+        color_names,
+        size_names,
+        stock,
+        category,
+        sold,
+        price,
+        short_description,
+        long_description,
+      } = req.body;
+
+      try {
+        await product.update({
+          product_name,
+          stock,
+          category,
+          sold,
+          price,
+          short_description,
+          long_description,
+          img: fileUrl,
+        });
+
+        const colorPromises = color_names.map((item: string) => {
+          return Product_color.upsert({name: item});
+        });
+
+        const sizePromises = size_names.map((item: string) => {
+          return Product_size.upsert({name: item});
+        });
+
+        const updatedColors = await Promise.all(colorPromises);
+        const updatedSizes = await Promise.all(sizePromises);
+
+        const finalData = {
+          img: fileUrl,
+          product_name,
+          colors: updatedColors,
+          sizes: updatedSizes,
+          stock,
+          category,
+          sold,
+          price,
+          short_description,
+          long_description,
+        };
+
+        res.status(200).json(finalData);
+      } catch (updateError) {
+        res.status(500).json({
+          message: "Error updating product details",
+          error: updateError.message,
+        });
+      }
     });
-
-    res.status(200).json(oldProduct);
   } catch (error) {
     res
       .status(500)
@@ -360,9 +420,28 @@ export const deleteProductById = async (
       return;
     }
 
+    const colors = await Product_color.findAll({
+      where: {product_id: product.id},
+    });
+
+    const sizes = await Product_size.findAll({
+      where: {product_id: product.id},
+    });
+
+    if (!colors || !sizes) {
+      res.status(404).json("Item not found");
+      return;
+    }
+
+    for (const color of colors) {
+      await color.destroy();
+    }
+    for (const size of sizes) {
+      await size.destroy();
+    }
     await product.destroy();
 
-    res.status(200).json({message: "Product deleted", product});
+    res.status(200).json({message: "Product deleted", colors, sizes});
   } catch (error) {
     res
       .status(500)

@@ -2,7 +2,7 @@ import {Request, Response} from "express";
 import {passwordHasing} from "../utils/passwordHasing";
 import {secretKey} from "../utils/secretKey";
 import upload from "../utils/multerConfig";
-const {User, User_details} = require("../db/models");
+const {User, User_details, Address} = require("../db/models");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -74,6 +74,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       username: user.username,
       email: user.email,
     };
+
+    await Address.create({
+      id: crypto.randomUUID(),
+      user_id: user.id,
+    });
 
     res.status(200).json({
       message: "Registered successfully",

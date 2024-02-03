@@ -13,6 +13,7 @@ const cartRouter = require("./cart.router");
 const addressRouter = require("./address.router");
 const checkoutRoutes = require("./chekout.router");
 const commentRoutes = require("./comment.router");
+const shippingRoutes = require("./shipping.router");
 
 // public
 router.use("/", userRouter);
@@ -26,5 +27,6 @@ router.use("/secured", cartRouter);
 router.use("/secured", addressRouter);
 router.use("/secured", checkoutRoutes);
 router.use("/secured", commentRoutes);
+router.use("/secured", shippingRoutes);
 
 export default router;

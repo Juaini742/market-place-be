@@ -8,15 +8,21 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      Checkout_item.belongsTo(models.Product, {
+        foreignKey: "id",
+      });
+      Checkout_item.belongsTo(models.Shipping, {
+        foreignKey: "id",
+      });
     }
   }
   Checkout_item.init(
     {
       product_id: DataTypes.STRING,
-      shipping: DataTypes.STRING,
+      shipping_id: DataTypes.STRING,
       quantity: DataTypes.INTEGER,
-      gross_amount: DataTypes.FLOAT,
+      color: DataTypes.STRING,
+      size: DataTypes.STRING,
       payment_status: DataTypes.STRING,
     },
     {

@@ -24,7 +24,7 @@ module.exports = {
         },
       },
       rating: {
-        type: Sequelize.STRING,
+        type: Sequelize.INTEGER,
       },
       message: {
         type: Sequelize.STRING,
