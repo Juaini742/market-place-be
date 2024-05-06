@@ -12,16 +12,16 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "user_id",
       });
       User.hasMany(models.Product, {
-        foreignKey: "user_id",
+        foreignKey: "id",
       });
       User.hasOne(models.Cart, {
-        foreignKey: "user_id",
+        foreignKey: "id",
       });
       User.hasOne(models.Address, {
         foreignKey: "user_id",
       });
       User.hasOne(models.Comment, {
-        foreignKey: "user_id",
+        foreignKey: "id",
       });
     }
   }

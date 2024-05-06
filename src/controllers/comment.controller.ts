@@ -1,7 +1,5 @@
 import {Request, Response} from "express";
-import {secretKey} from "../utils/secretKey";
 const {Comment, Product, User} = require("../db/models");
-const jwt = require("jsonwebtoken");
 
 // GET ALL COMMENTS
 export const getAllComments = async (
@@ -9,7 +7,18 @@ export const getAllComments = async (
   res: Response
 ): Promise<void> => {
   try {
-    const comments = await Comment.findAll();
+    const comments = await Comment.findAll({
+      include: [
+        {
+          model: User,
+          attributes: ["name", "avatar"],
+        },
+        {
+          model: Product,
+          attributes: ["id", "img", "product_name", "price"],
+        },
+      ],
+    });
 
     res.status(200).json(comments);
   } catch (error) {
@@ -28,23 +37,22 @@ export const getOneComment = async (
       res.status(404).json("Comment not found");
       return;
     }
-    const comment = await Comment.findByPk(id);
-    const product = await Product.findByPk(comment.product_id);
+    const comment = await Comment.findOne({
+      where: {id},
+      attributes: {exclude: ["user_id", "product_id"]},
+      include: [
+        {
+          model: User,
+          attributes: ["id"],
+        },
+        {
+          model: Product,
+          attributes: ["id", "img", "product_name", "price"],
+        },
+      ],
+    });
 
-    const finalData = {
-      id: comment.id,
-      user_id: comment.user_id,
-      product_id: {
-        id: product.id,
-        img: product.img,
-        product_name: product.product_name,
-        price: product.price,
-      },
-      rating: comment.rating,
-      message: comment.message,
-    };
-
-    res.status(200).json(finalData);
+    res.status(200).json(comment);
   } catch (error) {
     res.json({error: error.message});
   }
@@ -56,42 +64,26 @@ export const getCommentByUserId = async (
   res: Response
 ): Promise<void> => {
   try {
-    const user_id = req.params.id;
-
-    if (!user_id) {
-      res.status(404).json("User not found");
-      return;
-    }
+    const {id} = (req as any).User;
 
     const comments = await Comment.findAll({
       where: {
-        user_id,
+        user_id: id,
       },
+      attributes: {exclude: ["user_id", "product_id"]},
+      include: [
+        {
+          model: User,
+          attributes: ["name"],
+        },
+        {
+          model: Product,
+          attributes: ["id", "img", "product_name", "price"],
+        },
+      ],
     });
-    const finalData = await Promise.all(
-      comments.map(async (item: any) => {
-        const data = await Product.findByPk(item.product_id);
-        const user = await User.findByPk(item.user_id);
-        return {
-          id: item.id,
-          user_id: {
-            name: user.name,
-          },
-          message: item.message,
-          rating: item.rating,
-          product_id: {
-            id: data.id,
-            img: data.img,
-            product_name: data.product_name,
-            price: data.price,
-          },
-          createdAt: item.createdAt,
-          updatedAt: item.updatedAt,
-        };
-      })
-    );
 
-    res.status(200).json(finalData);
+    res.status(200).json(comments);
   } catch (error) {
     res.json({error: error.message});
   }
@@ -112,27 +104,20 @@ export const getAllCommentsByProductId = async (
 
     const comments = await Comment.findAll({
       where: {product_id: id},
+      attributes: {exclude: ["user_id", "product_id"]},
+      include: [
+        {
+          model: User,
+          attributes: ["id", "name", "avatar", "store_name"],
+        },
+        {
+          model: Product,
+          attributes: ["id", "img", "product_name", "price"],
+        },
+      ],
     });
 
-    const finalData = await Promise.all(
-      comments.map(async (item: any) => {
-        const user = await User.findByPk(item.user_id);
-
-        return {
-          id: item.id,
-          rating: item.rating,
-          message: item.message,
-          user_id: {
-            name: user.name,
-            avatar: user.avatar,
-          },
-          createdAt: item.createdAt,
-          updatedAt: item.updatedAt,
-        };
-      })
-    );
-
-    res.status(200).json(finalData);
+    res.status(200).json(comments);
   } catch (error) {
     res.json({error: error.message});
   }
@@ -151,21 +136,12 @@ export const addComment = async (
       return;
     }
 
-    const tokenHeader = req.headers.authorization;
-    if (!tokenHeader || !tokenHeader.startsWith("Bearer ")) {
-      res.status(401).json({message: "Unauthorized"});
-      return;
-    }
-
-    const token = tokenHeader.split(" ")[1];
-    const decodedToken = jwt.verify(token, secretKey);
-    const user_id = decodedToken.user_id;
-
+    const {id} = (req as any).User;
     const {rating, message} = req.body;
 
     const comment = await Comment.create({
       id: crypto.randomUUID(),
-      user_id,
+      user_id: id,
       product_id: productId.id,
       rating,
       message,

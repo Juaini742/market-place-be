@@ -5,6 +5,8 @@ import {
   getAllProducts,
   getProductById,
 } from "../controllers/product.controller";
+import {getOneUser} from "../controllers/user.controller";
+import {getAllCommentsByProductId} from "../controllers/comment.controller";
 const fileRouter = require("./file.router");
 router.use("/", fileRouter);
 const userRouter = require("./user.router");
@@ -19,9 +21,11 @@ const shippingRoutes = require("./shipping.router");
 router.use("/", userRouter);
 router.get("/public/products", getAllProducts);
 router.get("/public/productId/:id", getProductById);
+router.get("/public/getCommentProductId/:id", getAllCommentsByProductId);
 
 // secured
 router.use([authMiddleware]);
+router.get("/secured/oneUser", getOneUser);
 router.use("/secured", productRouter);
 router.use("/secured", cartRouter);
 router.use("/secured", addressRouter);

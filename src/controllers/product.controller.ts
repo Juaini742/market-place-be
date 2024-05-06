@@ -1,10 +1,8 @@
 import {Request, Response} from "express";
-import {secretKey} from "../utils/secretKey";
-import {ProductAttributes, UserAttributes} from "../const";
-import {getProductData} from "../utils/productUtils";
+import {ProductAttributes} from "../constants";
+// import {getProductData} from "../utils/productUtils";
 import {Op} from "sequelize";
 import upload from "../utils/multerConfig";
-const jwt = require("jsonwebtoken");
 const {Product, User, Product_color, Product_size} = require("../db/models");
 
 // GET ALL PRODUCT
@@ -144,20 +142,40 @@ export const getProductById = async (
   res: Response
 ): Promise<void> => {
   try {
-    const product = await Product.findByPk(req.params.id);
+    const id = req.params.id;
+
+    if (!id) {
+      res.status(404).json({message: "Id is required"});
+      return;
+    }
+
+    const product = await Product.findOne({
+      where: {id},
+      attributes: {exclude: ["user_id"]},
+      include: [
+        {
+          model: User,
+          attributes: {exclude: ["password", "email"]},
+        },
+      ],
+    });
+
+    const colorData = await Product_color.findAll({
+      where: {product_id: id},
+      attributes:  ["name"]
+    });
+
+    const sizeData = await Product_size.findAll({
+      where: {product_id: id},
+      ttributes:  ["name"]
+    });
 
     if (!product) {
       res.status(404).json("Product not found");
       return;
     }
-    const userId = product.user_id;
-    const user = await User.findOne({
-      where: {id: userId},
-    });
 
-    const productData: ProductAttributes = await getProductData(product, user);
-
-    res.status(200).json(productData);
+    res.status(200).json({product, colorData, sizeData});
   } catch (error) {
     throw new Error(error.message);
   }
@@ -169,18 +187,29 @@ export const getProductByUserId = async (
   res: Response
 ): Promise<void> => {
   try {
-    const userId = req.params.id;
-
-    if (!userId) {
-      res.status(400).json({message: "Invalid user ID"});
-      return;
-    }
+    const {id} = (req as any).User;
 
     const products: ProductAttributes[] = await Product.findAll({
       where: {
-        user_id: userId,
+        user_id: id,
       },
-      raw: true,
+      attributes: {exclude: ["user_id"]},
+      include: [
+        {
+          model: User,
+          attributes: {exclude: ["password", "email"]},
+        },
+      ],
+    });
+
+    const colorData = await Product_color.findAll({
+      where: {product_id: id},
+      attributes:  ["name"]
+    });
+
+    const sizeData = await Product_size.findAll({
+      where: {product_id: id},
+      ttributes:  ["name"]
     });
 
     if (!products) {
@@ -188,24 +217,7 @@ export const getProductByUserId = async (
       return;
     }
 
-    const responseData: ProductAttributes[] = [];
-
-    for (const product of products) {
-      const user: UserAttributes = await User.findOne({
-        where: {
-          id: product.user_id,
-        },
-        raw: true,
-      });
-
-      const productData: ProductAttributes = await getProductData(
-        product,
-        user
-      );
-
-      responseData.push(productData);
-    }
-    res.status(200).json(responseData);
+    res.status(200).json({products, colorData, sizeData});
   } catch (error) {
     res
       .status(500)
@@ -219,16 +231,7 @@ export const addProduct = async (
   res: Response
 ): Promise<void> => {
   try {
-    const tokenHeader = req.headers.authorization;
-
-    if (!tokenHeader || !tokenHeader.startsWith("Bearer ")) {
-      res.status(401).json({message: "Unauthorized"});
-      return;
-    }
-
-    const token = tokenHeader.split(" ")[1];
-    const decodedToken = jwt.verify(token, secretKey);
-    const user_id = decodedToken.user_id;
+    const {id} = (req as any).User;
 
     upload.single("file")(req, res, async (err: any) => {
       if (err) {
@@ -256,7 +259,7 @@ export const addProduct = async (
 
       const product = await Product.create({
         id: crypto.randomUUID(),
-        user_id,
+        user_id: id,
         product_name,
         stock,
         category,
@@ -286,7 +289,7 @@ export const addProduct = async (
 
       const productResponse = {
         id: product.id,
-        user_id,
+        user_id: id,
         product_name,
         colors: color_names,
         sizes: size_names,

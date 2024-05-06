@@ -21,16 +21,11 @@ export const getAddressByUserId = async (
   res: Response
 ): Promise<void> => {
   try {
-    const userId = req.params.id;
-
-    if (!userId) {
-      res.status(404).json("User not found");
-      return;
-    }
+    const {id} = (req as any).User;
 
     const address = await Address.findOne({
       where: {
-        user_id: userId,
+        user_id: id,
       },
     });
 
@@ -51,18 +46,13 @@ export const addAddress = async (
   res: Response
 ): Promise<void> => {
   try {
-    const userId = req.params.id;
-
-    if (!userId) {
-      res.status(404).json("Item not found");
-      return;
-    }
+    const {id} = (req as any).User;
 
     const {city, postal_code, privince, country, address} = req.body;
 
     const addressData = await Address.create({
       id: crypto.randomUUID(),
-      user_id: userId,
+      user_id: id,
       city,
       postal_code,
       privince,

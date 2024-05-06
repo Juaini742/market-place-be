@@ -20,38 +20,39 @@ export const getAllUser = async (
   }
 };
 
+export const getOneUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const {id} = (req as any).User;
+
+    const user = await User.findByPk(id);
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({error: error.message});
+  }
+};
+
 // GET USER BY TOKEN
 export const getUserByToken = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const token = req.header("Authorization")?.replace("Bearer ", "");
+    const {id} = (req as any).User;
 
-    if (!token) {
-      res.status(401).json({error: "Token not provided"});
-      return;
-    }
-
-    const decoded = jwt.verify(token, secretKey);
-
-    const user_id = (decoded as any).user_id;
-
-    const userDetails = await User_details.findOne({where: {user_id}});
-
-    if (!userDetails) {
-      res.status(404).json({error: "User is not found"});
-      return;
-    }
-
-    const user = await User.findByPk(user_id);
+    const user = await User.findByPk(id);
 
     if (!user) {
       res.status(404).json({error: "User is not found"});
       return;
     }
 
-    res.status(200).json({user});
+    const {password, ...dataUser} = user.dataValues;
+
+    res.status(200).json({dataUser});
   } catch (error) {
     res.status(500).json({error: error.message});
   }
@@ -120,10 +121,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: true,
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 86400000,
     });
 
-    res.status(200).json({message: "Login Successfully", token});
+    const {id} = user.dataValues;
+
+    res.status(200).json({message: "Login Successfully", id});
   } catch (error) {
     console.error(error);
     res.status(500).json({
@@ -136,19 +139,26 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 // LOGOUT USER
 export const logout = async (req: Request, res: Response): Promise<void> => {
   try {
-    const token = req.headers.authorization;
+    const {id} = (req as any).User;
 
-    const deleteUser = await User_details.destroy({
-      where: {refresh_token: token?.split(" ")[1]},
-    });
+    const user = await User_details.findOne({where: {user_id: id}});
 
-    if (deleteUser > 0) {
-      res.json({success: true, message: "Logout successful"});
-    } else {
+    if (!user) {
       res
         .status(404)
         .json({error: "User detail not found for the provided token"});
+      return;
     }
+
+    res.cookie("token", secretKey, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 0,
+    });
+
+    await user.destroy();
+
+    res.json({success: true, message: "Logout successful"});
   } catch (error) {
     res.status(500).json({error: error.message});
   }

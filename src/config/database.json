@@ -1,7 +1,7 @@
 {
   "development": {
     "username": "root",
-    "password": "Admin123#JJ",
+    "password": "Admin123JJ",
     "database": "db_market_place",
     "host": "127.0.0.1",
     "dialect": "mysql"

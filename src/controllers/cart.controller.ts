@@ -1,9 +1,7 @@
-import {Request, Response} from "express";
-import {secretKey} from "../utils/secretKey";
-import {CartAttributes, ProductAttributes, UserAttributes} from "src/const";
-import {getProductData} from "../utils/productUtils";
-const {Cart, Product, User} = require("../db/models");
-const jwt = require("jsonwebtoken");
+import { Request, Response } from "express";
+// import {CartAttributes, ProductAttributes, UserAttributes} from "../constants";
+// import {getProductData} from "../utils/productUtils";
+const { Cart, Product, User } = require("../db/models");
 
 // GET ALL CART ITEMS
 export const getAllCart = async (
@@ -15,7 +13,7 @@ export const getAllCart = async (
 
     res.json(carts);
   } catch (error) {
-    res.status(500).json({error: error.message});
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -25,71 +23,37 @@ export const getCartByUserId = async (
   res: Response
 ): Promise<void> => {
   try {
-    const userId = req.params.id;
+    const { id } = (req as any).User;
 
-    if (!userId) {
-      res.status(404).json("Items not found");
-      return;
-    }
-
-    const carts: CartAttributes[] = await Cart.findAll({
+    const carts = await Cart.findAll({
       where: {
-        user_id: userId,
+        user_id: id,
       },
-      raw: true,
+      attributes: { exclude: ["user_id", "product_id"] },
+      include: [
+        {
+          model: User,
+          attributes: ["id", "avatar", "username", "store_name"],
+        },
+        {
+          model: Product,
+          attributes: {
+            exclude: ["user_id", "short_description", "long_description"],
+          },
+        },
+      ],
     });
 
-    if (!carts) {
-      res.status(404).json("Items not found");
+    if (!carts || carts.length === 0) {
+      res.status(404).json({ message: "Items not found" });
       return;
     }
 
-    const responseData: CartAttributes[] = [];
-
-    for (const cart of carts) {
-      const user: UserAttributes = await User.findOne({
-        where: {
-          id: cart.user_id,
-        },
-        raw: true,
-      });
-
-      const product: ProductAttributes = await Product.findOne({
-        where: {
-          id: cart.product_id,
-        },
-        raw: true,
-      });
-
-      const productData: ProductAttributes = await getProductData(
-        product,
-        user
-      );
-
-      const cartData: CartAttributes = {
-        id: cart.id,
-        user_id: {
-          id: user.id,
-          avatar: user.avatar,
-          username: user.username,
-          store_name: user.store_name || null,
-        },
-        product_id: productData,
-        quantity: cart.quantity,
-        color: cart.color,
-        size: cart.size,
-        createdAt: cart.createdAt,
-        updatedAt: cart.createdAt,
-      };
-
-      responseData.push(cartData);
-    }
-
-    res.json(responseData);
+    res.json(carts);
   } catch (error) {
     res
       .status(500)
-      .json({message: "Internal Server Error", error: error.message});
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 
@@ -102,19 +66,8 @@ export const addCart = async (req: Request, res: Response): Promise<void> => {
       res.status(404).json("Product not found");
       return;
     }
-
-    const tokenHeader = req.headers.authorization;
-
-    if (!tokenHeader || !tokenHeader.startsWith("Bearer ")) {
-      res.status(401).json({message: "Unauthorized"});
-      return;
-    }
-
-    const token = tokenHeader.split(" ")[1];
-    const decodedToken = jwt.verify(token, secretKey);
-    const user_id = decodedToken.user_id;
-
-    const {quantity, color, size} = req.body;
+    const { id } = (req as any).User;
+    const { quantity, color, size } = req.body;
 
     // if (productId.stock < quantity) {
     //   res.status(400).json({message: "Insufficient stock"});
@@ -125,18 +78,29 @@ export const addCart = async (req: Request, res: Response): Promise<void> => {
 
     // await productId.save();
 
+    const carts = await Cart.findOne({
+      where: {
+        product_id: productId.id,
+      },
+    });
+
+    if (carts) {
+      res.status(400).json({ message: "This product has already been saved" });
+      return;
+    }
+
     const cart = await Cart.create({
       id: crypto.randomUUID(),
-      user_id,
+      user_id: id,
       product_id: productId.id,
       quantity,
       color,
       size,
     });
 
-    res.json({status: 200, cart});
+    res.json({ status: 200, cart });
   } catch (error) {
-    res.json({error: error.message});
+    res.json({ error: error.message });
   }
 };
 
@@ -155,14 +119,14 @@ export const updateCart = async (
 
     const cart = await Cart.findByPk(cartId);
 
-    const {quantity} = req.body;
+    const { quantity } = req.body;
 
     await cart.update({
       quantity,
     });
-    res.json({status: 200, cart});
+    res.json({ status: 200, cart });
   } catch (error) {
-    res.json({error: error.message});
+    res.json({ error: error.message });
   }
 };
 
@@ -181,8 +145,8 @@ export const deleteCart = async (
 
     const certItem = await carts.destroy();
 
-    res.status(200).json({message: "Delete successfully", certItem});
+    res.status(200).json({ message: "Delete successfully", certItem });
   } catch (error) {
-    res.json({error: error.message});
+    res.json({ error: error.message });
   }
 };

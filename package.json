@@ -11,6 +11,7 @@
   "author": "Juaini",
   "license": "MIT",
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.7",
     "@types/cors": "latest",
     "@types/express": "latest",
     "@types/node": "latest",
@@ -23,6 +24,7 @@
     "axios": "^1.6.5",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
+    "cookie-parser": "^1.4.6",
     "cors": "latest",
     "dotenv": "latest",
     "express": "latest",

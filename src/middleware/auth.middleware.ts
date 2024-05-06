@@ -1,6 +1,6 @@
 import {Request, Response, NextFunction} from "express";
 import {secretKey} from "../utils/secretKey";
-const {User_details} = require("../db/models");
+const {User_details, User} = require("../db/models");
 const jwt = require("jsonwebtoken");
 
 export const authMiddleware = async (
@@ -9,18 +9,13 @@ export const authMiddleware = async (
   next: NextFunction
 ) => {
   try {
-    const token = req.headers.authorization;
+    const token = req.cookies["token"];
 
     if (!token) {
       return next(new Error("Authorization is missing"));
     }
 
-    const [bearer, tokenValue] = token.split(" ");
-    if (bearer !== "Bearer" || !tokenValue) {
-      throw new Error("Invalid token format");
-    }
-
-    const decodedToken = jwt.verify(tokenValue, secretKey, {
+    const decodedToken = jwt.verify(token, secretKey, {
       expiresIn: "24h",
     });
 
@@ -29,12 +24,22 @@ export const authMiddleware = async (
     }
 
     const userDetail = await User_details.findOne({
-      where: {refresh_token: tokenValue},
+      where: {refresh_token: token},
     });
 
     if (!userDetail) {
       throw new Error("You are not authenticated to access this data");
     }
+
+    const user = await User.findByPk(decodedToken.user_id);
+
+    if (!user) {
+      return next("User unauthorized");
+    }
+
+    (req as any).User = {
+      id: user.dataValues.id,
+    };
 
     next();
   } catch (error) {

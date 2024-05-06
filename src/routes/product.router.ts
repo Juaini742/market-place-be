@@ -7,7 +7,7 @@ import {
   updateProduct,
 } from "../controllers/product.controller";
 
-router.get("/productUser/:id", getProductByUserId);
+router.get("/productUser", getProductByUserId);
 router.post("/addProduct", addProduct);
 router.put("/update/:id", updateProduct);
 router.delete("/delete/:id", deleteProductById);

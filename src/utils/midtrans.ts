@@ -1,4 +1,4 @@
-import {midtransPublicClient, midtransPublicSecret} from "../const";
+import {midtransPublicClient, midtransPublicSecret} from "../constants";
 const Midtrans = require("midtrans-client");
 
 export let snap = new Midtrans.Snap({

@@ -1,4 +1,4 @@
-import {ColorAndSize} from "../const/";
+import {ColorAndSize} from "../constants";
 
 const {Product_color, Product_size} = require("../db/models");
 

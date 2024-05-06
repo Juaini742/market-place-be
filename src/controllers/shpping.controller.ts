@@ -1,6 +1,6 @@
 import {Request, Response} from "express";
 import {snap} from "../utils/midtrans";
-import {DataAttributes} from "../const";
+import {DataAttributes} from "../constants";
 const {
   Address,
   // User,
@@ -15,10 +15,10 @@ export const getCheckout = async (
   res: Response
 ): Promise<void> => {
   try {
-    const userId = req.params.id;
+    const {id} = (req as any).User;
 
     const shipping = await Shipping.findAll({
-      where: {user_id: userId},
+      where: {user_id: id},
     });
 
     if (!shipping || shipping.length === 0) {
