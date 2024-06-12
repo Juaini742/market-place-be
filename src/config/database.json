@@ -1,9 +1,9 @@
 {
   "development": {
-    "username": "root",
-    "password": "Admin123JJ",
-    "database": "db_market_place",
-    "host": "127.0.0.1",
+    "username": "u861993382_adminA123",
+    "password": "adminA123",
+    "database": "u861993382_market_place",
+    "host": "153.92.15.21",
     "dialect": "mysql"
   },
   "test": {
@@ -14,10 +14,10 @@
     "dialect": "mysql"
   },
   "production": {
-    "username": "root",
-    "password": null,
-    "database": "database_production",
-    "host": "127.0.0.1",
+    "username": "u861993382_adminA123",
+    "password": "adminA123",
+    "database": "u861993382_market_place",
+    "host": "153.92.15.21",
     "dialect": "mysql"
   }
 }

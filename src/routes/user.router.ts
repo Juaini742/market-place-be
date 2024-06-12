@@ -1,4 +1,4 @@
-import {authMiddleware} from "../middleware/auth.middleware";
+import { authMiddleware } from "../middleware/auth.middleware";
 import {
   deleteUserById,
   getAllUser,
@@ -8,7 +8,8 @@ import {
   register,
   updateUser,
 } from "../controllers/user.controller";
-import {refreshToken} from "../controllers/refreshToken.controller";
+import { refreshToken } from "../controllers/refreshToken.controller";
+import upload from "../utils/multerConfig2";
 
 const express = require("express");
 const router = express.Router();
@@ -17,7 +18,12 @@ router.post("/register", register);
 router.post("/login", login);
 router.get("/users", authMiddleware, getAllUser);
 router.get("/getUserByToken", authMiddleware, getUserByToken);
-router.put("/updateUser/:id", authMiddleware, updateUser);
+router.put(
+  "/updateUser/:id",
+  authMiddleware,
+  upload.single("file"),
+  updateUser
+);
 router.post("/logout", authMiddleware, logout);
 router.get("/refreshToken", authMiddleware, refreshToken);
 router.post("/deleteUser/:id", deleteUserById);

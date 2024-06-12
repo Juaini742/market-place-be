@@ -1,6 +1,6 @@
-import {Request, Response} from "express";
-import {snap} from "../utils/midtrans";
-import {DataAttributes} from "../constants";
+import { Request, Response } from "express";
+import { snap } from "../utils/midtrans";
+import { DataAttributes } from "../constants";
 const {
   Address,
   // User,
@@ -15,10 +15,10 @@ export const getCheckout = async (
   res: Response
 ): Promise<void> => {
   try {
-    const {id} = (req as any).User;
+    const { id } = (req as any).User;
 
     const shipping = await Shipping.findAll({
-      where: {user_id: id},
+      where: { user_id: id },
     });
 
     if (!shipping || shipping.length === 0) {
@@ -29,7 +29,7 @@ export const getCheckout = async (
     const checkout = await Promise.all(
       shipping.map(async (item: any) => {
         const checkoutItems = await Checkout_item.findAll({
-          where: {shipping_id: item.id},
+          where: { shipping_id: item.id },
         });
 
         return checkoutItems;
@@ -67,7 +67,7 @@ export const getCheckout = async (
 
     res.status(200).json(finalData);
   } catch (error) {
-    res.status(500).json({error: error.message});
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -76,13 +76,13 @@ export const addShiping = async (
   res: Response
 ): Promise<void> => {
   try {
-    const {payment, color, size, product_dates, quantities} = req.body;
+    const { payment, color, size, product_dates, quantities } = req.body;
 
     const address_id = req.params.id;
 
     const address = await Address.findByPk(address_id);
     if (!address) {
-      res.status(404).json({message: "User not found"});
+      res.status(404).json({ message: "User not found" });
       return;
     }
 
@@ -131,7 +131,7 @@ export const addShiping = async (
       await Promise.all(checkout);
 
       const totalGrossAmount: number = data.reduce(
-        (total: number, item: {price: number; quantity: number}) =>
+        (total: number, item: { price: number; quantity: number }) =>
           total + item.price * item.quantity,
         0
       );
@@ -147,12 +147,12 @@ export const addShiping = async (
       const token = await snap.createTransactionToken(parameters);
 
       res.status(201).json({
-        message: "Data Shipping Berhasil Dibuat",
+        message: "Data Shipping Successfully",
         shipping,
         token,
       });
     }
   } catch (error) {
-    res.status(500).json({error: error.message});
+    res.status(500).json({ error: error.message });
   }
 };

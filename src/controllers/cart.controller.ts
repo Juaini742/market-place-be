@@ -67,7 +67,7 @@ export const addCart = async (req: Request, res: Response): Promise<void> => {
       return;
     }
     const { id } = (req as any).User;
-    const { quantity, color, size } = req.body;
+    const { color, quantity, size } = req.body;
 
     // if (productId.stock < quantity) {
     //   res.status(400).json({message: "Insufficient stock"});
@@ -77,6 +77,11 @@ export const addCart = async (req: Request, res: Response): Promise<void> => {
     // productId.stock -= quantity;
 
     // await productId.save();
+
+    if (!quantity || !color || !size) {
+      res.status(400).json({ message: "Please fill all the fields" });
+      return;
+    }
 
     const carts = await Cart.findOne({
       where: {

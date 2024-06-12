@@ -1,11 +1,11 @@
-import {Request, Response, NextFunction} from "express";
-import {secretKey} from "../utils/secretKey";
-const {User_details, User} = require("../db/models");
+import { Request, Response, NextFunction } from "express";
+import { secretKey } from "../utils/secretKey";
+const { User_details, User } = require("../db/models");
 const jwt = require("jsonwebtoken");
 
 export const authMiddleware = async (
   req: Request,
-  _res: Response,
+  res: Response,
   next: NextFunction
 ) => {
   try {
@@ -15,16 +15,27 @@ export const authMiddleware = async (
       return next(new Error("Authorization is missing"));
     }
 
-    const decodedToken = jwt.verify(token, secretKey, {
-      expiresIn: "24h",
-    });
+    let decodedToken;
 
-    if (decodedToken.exp <= Date.now() / 1000) {
-      throw new Error("Token has expired");
+    try {
+      decodedToken = jwt.verify(token, secretKey, {
+        ignoreExpiration: false,
+      });
+    } catch (error) {
+      if (error.name === "TokenExpiredError") {
+        res.cookie("token", "", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          expires: new Date(0),
+          sameSite: "none",
+        });
+        return res.status(401).json({ message: "Unauthorized: Token expired" });
+      }
+      throw error;
     }
 
     const userDetail = await User_details.findOne({
-      where: {refresh_token: token},
+      where: { refresh_token: token },
     });
 
     if (!userDetail) {

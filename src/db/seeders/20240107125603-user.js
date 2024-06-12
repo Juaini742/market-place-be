@@ -15,7 +15,7 @@ module.exports = {
     const dataUsers = [
       {
         id: "04aada87-26cc-40d0-81f9-40ae34bc81dc",
-        avatar: "",
+        avatar: null,
         username: "user1",
         name: "John Doe",
         email: "john.doe@example.com",
@@ -26,7 +26,7 @@ module.exports = {
       },
       {
         id: "79846596-af08-409b-97a9-daded7a4da29",
-        avatar: "",
+        avatar: null,
         username: "user2",
         name: "Jane Doe",
         email: "jane.doe@example.com",
@@ -37,7 +37,7 @@ module.exports = {
       },
       {
         id: "79846596-af08-409b-97a9-daded7a4da30",
-        avatar: "",
+        avatar: null,
         username: "user3",
         name: "Bob Smith",
         email: "bob.smith@example.com",
